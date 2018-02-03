@@ -32,17 +32,23 @@ namespace multisqlite
 //		}
 
 		List<string> getConnectionStrings(string connstr){
-			List<string> result=new List<string>();
 			var connstrobj=new SQLiteConnectionStringBuilder(connstr);
+			if(connstrobj.DataSource.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+				throw new ArgumentException("Invalid DataSource.");
 			string dirstr=Path.GetDirectoryName(connstrobj.DataSource);
+			string filename=Path.GetFileName(connstrobj.DataSource);
 			string searchdir;
-			if(dirstr!=null && dirstr.Length>0 && Directory.Exists(dirstr))
+			if(!String.IsNullOrEmpty(dirstr) && Directory.Exists(dirstr))
 				searchdir=dirstr;
 			else
 				searchdir=Directory.GetCurrentDirectory();
-			string[] files=Directory.GetFiles(searchdir,connstrobj.DataSource+"*");
-			if(files.Length==0)
+			string[] files=Directory.GetFiles(searchdir,filename+"*");
+			List<string> result=new List<string>();
+			if(files.Length==0){
+				File.Create(Path.Combine(searchdir,filename)).Dispose();
+				connstrobj.DataSource=filename;
 				result.Add(connstr);
+			}
 			else foreach(string file in files){
 				connstrobj.DataSource=file;
 				result.Add(connstrobj.ConnectionString);

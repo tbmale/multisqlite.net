@@ -26,16 +26,18 @@ namespace multisqlite
 		}
 		public mSQLiteCommand()
 		{
-			_sqlcommands=null;
+			_sqlcommands=new List<System.Data.SQLite.SQLiteCommand>();
 			_sqlconn=null;
 		}
 		public mSQLiteCommand(string command)
 		{
+			_sqlcommands=new List<System.Data.SQLite.SQLiteCommand>();
 			_sqlcommstr=command;
 			_sqlconn=null;
 		}
 		public mSQLiteCommand(string command,mSQLiteConnection sconn)
 		{
+			_sqlcommands=new List<System.Data.SQLite.SQLiteCommand>();
 			_sqlcommstr=command;
 			_sqlconn=sconn;
 		}
@@ -44,6 +46,7 @@ namespace multisqlite
 		}
 		public mSQLiteDataReader ExecuteReader(System.Data.CommandBehavior commandbehavior=System.Data.CommandBehavior.Default){
 			if(_sqlcommstr.Split(' ')[0].ToUpperInvariant()!="SELECT")throw(new System.Data.SQLite.SQLiteException("SELECT sql statement expected (for modifying queries use ExecuteNonQuery)"));
+			if(_sqlcommstr.ToUpperInvariant().Contains("GROUP BY"))throw(new NotImplementedException("GROUP BY clause not (yet) implemented."));
 			mSQLiteDataReader mreader=new mSQLiteDataReader();
 			if(_sqlconn==null)throw(new System.Data.SQLite.SQLiteException("Connection object not specified."));
 			foreach(var conn in _sqlconn){

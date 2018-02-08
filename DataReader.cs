@@ -18,271 +18,203 @@ namespace multisqlite
 	/// </summary>
 	public class mSQLiteDataReader:IDataReader
 	{
-		bool m_fOpen;
 		internal List <System.Data.SQLite.SQLiteDataReader> tables;
+		int current_table;
+		int step_count;
 		internal mSQLiteDataReader()
 		{
 			tables= new List<System.Data.SQLite.SQLiteDataReader>();
+			current_table=0;
 		}
 		
 		public int Depth
 		{
-			/*
-			 * Always return a value of zero if nesting is not supported.
-			 */
-			get { return 0;  }
+			get { return 0; }
+		}
+		public int StepCount
+		{
+			get { return 0; }
+		}
+		public int VisibleFieldCount
+		{
+			get{return tables[0].VisibleFieldCount;}
 		}
 
+		public bool HasRows
+		{
+			get{return tables[current_table].HasRows;}
+		}
 		public bool IsClosed
 		{
-			/*
-			 * Keep track of the reader state - some methods should be
-			 * disallowed if the reader is closed.
-			 */
-			get  { return !m_fOpen; }
+			get  {
+				bool closed=true;
+				foreach(var reader in tables)closed=reader.IsClosed;
+				return closed;
+			}
 		}
 
 		public int RecordsAffected
 		{
-			/*
-			 * RecordsAffected is only applicable to batch statements
-			 * that include inserts/updates/deletes. The sample always
-			 * returns -1.
-			 */
 			get { return -1; }
 		}
 
 		public void Close()
 		{
-			/*
-			 * Close the reader. The sample only changes the state,
-			 * but an actual implementation would also clean up any
-			 * resources used by the operation. For example,
-			 * cleaning up any resources waiting for data to be
-			 * returned by the server.
-			 */
-			m_fOpen = false;
+			foreach(var reader in tables)reader.Close();
 		}
 
 		public bool NextResult()
 		{
-			// The sample only returns a single resultset. However,
-			// DbDataAdapter expects NextResult to return a value.
-			return false;
+			if(current_table>=tables.Count)return false;
+			step_count++;
+			bool result=tables[current_table].NextResult();
+			if(!result){
+				current_table++;
+				if(current_table<tables.Count)result=tables[current_table].NextResult();
+			}
+			return result;
 		}
 
 		public bool Read()
 		{
-			// Return true if it is possible to advance and if you are still positioned
-			// on a valid row. Because the data array in the resultset
-			// is two-dimensional, you must divide by the number of columns.
-			if (m_fOpen)
-				return false;
-			else
-				return true;
+			if(current_table>=tables.Count)return false;
+			step_count++;
+			bool result=tables[current_table].Read();
+			if(!result){
+				current_table++;
+				if(current_table<tables.Count)result=tables[current_table].Read();
+			}
+			return result;
 		}
 
 		public DataTable GetSchemaTable()
 		{
-			//$
-			throw new NotSupportedException();
+			return tables[0].GetSchemaTable();
 		}
 
-		/****
-		 * METHODS / PROPERTIES FROM IDataRecord.
-		 ****/
 		public int FieldCount
 		{
-			// Return the count of the number of columns, which in
-			// this case is the size of the column metadata
-			// array.
-			get { return 0; }
+			get { return tables[0].FieldCount; }
 		}
 
 		public String GetName(int i)
 		{
-			return "unset";
+			return tables[0].GetName(i);
 		}
 
 		public String GetDataTypeName(int i)
 		{
-			/*
-			 * Usually this would return the name of the type
-			 * as used on the back end, for example 'smallint' or 'varchar'.
-			 * The sample returns the simple name of the .NET Framework type.
-			 */
-			return "string";
+			return tables[0].GetDataTypeName(i);
 		}
 
 		public Type GetFieldType(int i)
 		{
-			// Return the actual Type class for the data type.
-			return Type.GetType("int");
+			return tables[0].GetFieldType(i);
 		}
 
 		public Object GetValue(int i)
 		{
-			return "unset";
+			return tables[current_table].GetValue(i);
 		}
 
 		public int GetValues(object[] values)
 		{
-			return 0;
+			return tables[current_table].GetValues(values);
 		}
 
 		public int GetOrdinal(string name)
 		{
-			// Look for the ordinal of the column with the same name and return it.
-			return 0;
-			// Throw an exception if the ordinal cannot be found.
-			throw new IndexOutOfRangeException("Could not find specified column in results");
+			return tables[current_table].GetOrdinal(name);
 		}
 
 		public object this [ int i ]
 		{
-			get { return "unset"; }
+			get { return tables[current_table][i]; }
 		}
 
 		public object this [ String name ]
 		{
-			// Look up the ordinal and return
-			// the value at that position.
-			get { return this[GetOrdinal(name)]; }
+			get { return tables[current_table][tables[current_table].GetOrdinal(name)]; }
 		}
 
 		public bool GetBoolean(int i)
 		{
-			/*
-			 * Force the cast to return the type. InvalidCastException
-			 * should be thrown if the data is not already of the correct type.
-			 */
-			return (bool)true;
+			return tables[current_table].GetBoolean(i);
 		}
 
 		public byte GetByte(int i)
 		{
-			/*
-			 * Force the cast to return the type. InvalidCastException
-			 * should be thrown if the data is not already of the correct type.
-			 */
-			return (byte)0;
+			return tables[current_table].GetByte(i);
 		}
 
 		public long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
 		{
-			// The sample does not support this method.
-			throw new NotSupportedException("GetBytes not supported.");
+			return tables[current_table].GetBytes(i, fieldOffset, buffer, bufferoffset, length);
 		}
 
 		public char GetChar(int i)
 		{
-			/*
-			 * Force the cast to return the type. InvalidCastException
-			 * should be thrown if the data is not already of the correct type.
-			 */
-			throw new NotSupportedException("GetBytes not supported.");
+			return tables[current_table].GetChar(i);
 		}
 
 		public long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
 		{
-			// The sample does not support this method.
-			throw new NotSupportedException(" not supported.");
+			return tables[current_table].GetChars(i, fieldoffset, buffer, bufferoffset, length);
 		}
 
 		public Guid GetGuid(int i)
 		{
-			/*
-			 * Force the cast to return the type. InvalidCastException
-			 * should be thrown if the data is not already of the correct type.
-			 */
-			throw new NotSupportedException(" not supported.");
+			return tables[current_table].GetGuid(i);
 		}
 
 		public Int16 GetInt16(int i)
 		{
-			/*
-			 * Force the cast to return the type. InvalidCastException
-			 * should be thrown if the data is not already of the correct type.
-			 */
-			throw new NotSupportedException(" not supported.");
+			return tables[current_table].GetInt16(i);
 		}
 
 		public Int32 GetInt32(int i)
 		{
-			/*
-			 * Force the cast to return the type. InvalidCastException
-			 * should be thrown if the data is not already of the correct type.
-			 */
-			throw new NotSupportedException(" not supported.");
+			return tables[current_table].GetInt32(i);
 		}
 
 		public Int64 GetInt64(int i)
 		{
-			/*
-			 * Force the cast to return the type. InvalidCastException
-			 * should be thrown if the data is not already of the correct type.
-			 */
-			throw new NotSupportedException(" not supported.");
+			return tables[current_table].GetInt64(i);
 		}
 
 		public float GetFloat(int i)
 		{
-			/*
-			 * Force the cast to return the type. InvalidCastException
-			 * should be thrown if the data is not already of the correct type.
-			 */
-			throw new NotSupportedException(" not supported.");
+			return tables[current_table].GetFloat(i);
 		}
 
 		public double GetDouble(int i)
 		{
-			/*
-			 * Force the cast to return the type. InvalidCastException
-			 * should be thrown if the data is not already of the correct type.
-			 */
-			throw new NotSupportedException(" not supported.");
+			return tables[current_table].GetDouble(i);
 		}
 
 		public String GetString(int i)
 		{
-			/*
-			 * Force the cast to return the type. InvalidCastException
-			 * should be thrown if the data is not already of the correct type.
-			 */
-			throw new NotSupportedException(" not supported.");
+			return tables[current_table].GetString(i);
 		}
 
 		public Decimal GetDecimal(int i)
 		{
-			/*
-			 * Force the cast to return the type. InvalidCastException
-			 * should be thrown if the data is not already of the correct type.
-			 */
-			throw new NotSupportedException(" not supported.");
+			return tables[current_table].GetDecimal(i);
 		}
 
 		public DateTime GetDateTime(int i)
 		{
-			/*
-			 * Force the cast to return the type. InvalidCastException
-			 * should be thrown if the data is not already of the correct type.
-			 */
-			throw new NotSupportedException(" not supported.");
+			return tables[current_table].GetDateTime(i);
 		}
 
 		public IDataReader GetData(int i)
 		{
-			/*
-			 * The sample code does not support this method. Normally,
-			 * this would be used to expose nested tables and
-			 * other hierarchical data.
-			 */
 			throw new NotSupportedException("GetData not supported.");
 		}
 
 		public bool IsDBNull(int i)
 		{
-			throw new NotSupportedException(" not supported.");
+			return tables[current_table].IsDBNull(i);
 		}
 
 		/*
@@ -297,18 +229,7 @@ namespace multisqlite
 
 		private void Dispose(bool disposing)
 		{
-			if (disposing)
-			{
-				try
-				{
-					this.Close();
-				}
-				catch (Exception e)
-				{
-					throw new SystemException("An exception of type " + e.GetType() +
-					                          " was encountered while closing the TemplateDataReader.");
-				}
-			}
+			foreach(var reader in tables)reader.Close();
 		}
 
 	}

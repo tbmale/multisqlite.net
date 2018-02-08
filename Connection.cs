@@ -7,6 +7,7 @@
  * To change this template use Tools | Options | Coding | Edit Standard Headers.
  */
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.IO;
@@ -16,21 +17,25 @@ namespace multisqlite
 	/// <summary>
 	/// Description of multisqlite.
 	/// </summary>
-	public class SQLiteConnection
+	public class mSQLiteConnection:IEnumerable<System.Data.SQLite.SQLiteConnection>
 	{
 		List<System.Data.SQLite.SQLiteConnection> _connectionlist;
-		public SQLiteConnection(string connstr)
+		public mSQLiteConnection(string connstr)
 		{
 			_connectionlist=new List<System.Data.SQLite.SQLiteConnection>();
 			foreach(string singleconnstr in getConnectionStrings(connstr)){
 				_connectionlist.Add(new System.Data.SQLite.SQLiteConnection(singleconnstr));
-			        	}
 			}
-//		public Connection()
-//		{
-//
-//		}
+		}
 
+		public IEnumerator<System.Data.SQLite.SQLiteConnection> GetEnumerator(){
+			return _connectionlist.GetEnumerator();
+			
+		}
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return GetEnumerator();
+		}
 		List<string> getConnectionStrings(string connstr){
 			var connstrobj=new SQLiteConnectionStringBuilder(connstr);
 			if(connstrobj.DataSource.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
@@ -52,10 +57,19 @@ namespace multisqlite
 			else foreach(string file in files){
 				connstrobj.DataSource=file;
 				result.Add(connstrobj.ConnectionString);
-				}
+			}
 			return result;
 		}
-		
+		public void Open(){
+			foreach(System.Data.SQLite.SQLiteConnection sconn in _connectionlist){
+				sconn.Open();
+			}
+		}
+		public void Close(){
+			foreach(System.Data.SQLite.SQLiteConnection sconn in _connectionlist){
+				sconn.Close();
+			}
+		}
 		
 	}
 }

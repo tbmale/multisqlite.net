@@ -1,0 +1,7 @@
+A:\_lucru\.NET\tests\multisqlite\bin\Debug\multisqlite.dll
+A:\_lucru\.NET\tests\multisqlite\bin\Debug\multisqlite.pdb
+A:\_lucru\.NET\tests\multisqlite\bin\Debug\System.Data.SQLite.dll
+A:\_lucru\.NET\tests\multisqlite\bin\Debug\System.Data.SQLite.xml
+A:\_lucru\.NET\tests\multisqlite\obj\Debug\multisqlite.csprojResolveAssemblyReference.cache
+A:\_lucru\.NET\tests\multisqlite\obj\Debug\multisqlite.dll
+A:\_lucru\.NET\tests\multisqlite\obj\Debug\multisqlite.pdb

@@ -36,6 +36,12 @@ namespace multisqlite
 				return new FileInfo(new SQLiteConnectionStringBuilder(_connectionlist[last_slice_no].ConnectionString).DataSource).Length;
 			}
 		}
+		internal SQLiteConnection this[int i]{
+			get{
+				if(i>=0&&i<_connectionlist.Count)return _connectionlist[i];
+				return null;
+			}
+		}
 		public mSQLiteConnection(string connstr)
 		{
 			db_definition=null;

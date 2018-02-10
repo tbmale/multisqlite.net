@@ -57,7 +57,17 @@ namespace multisqlite
 			return mreader;
 		}
 		public int ExecuteNonQuery(System.Data.CommandBehavior commandbehavior=System.Data.CommandBehavior.Default){
-			
+			int result=0;
+			if(_sqlcommstr.Split(' ')[0].ToUpperInvariant()=="INSERT"){
+				var comm=new System.Data.SQLite.SQLiteCommand(_sqlcommstr,_sqlconn[_sqlconn.last_slice_no]);
+				result=comm.ExecuteNonQuery();
+				return result;
+			}
+			foreach(var conn in _sqlconn){
+				var comm=new System.Data.SQLite.SQLiteCommand(_sqlcommstr,conn);
+				result+=comm.ExecuteNonQuery();
+			}
+			return result;
 			throw(new NotImplementedException());
 		}
 	}
